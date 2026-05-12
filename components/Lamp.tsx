@@ -17,7 +17,7 @@ export default function Lamp() {
         </p>
 
         <a
-          href="https://wa.me/919999999999"
+          href="https://wa.me/917006599020?text=I'm interested in exploring the fragrance collection at Al-Kawthar"
           target="_blank"
           className="inline-block mt-10 bg-yellow-500 text-black px-8 py-4 rounded-full font-semibold"
         >

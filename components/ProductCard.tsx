@@ -14,7 +14,7 @@ export default function ProductCard({
   description,
 }: ProductProps) {
 
-  const whatsappNumber = "919999999999";
+  const whatsappNumber = "917006599020"; // Replace with your WhatsApp number
 
   const message = `Hello, I want to order ${name} for ₹${price}`;
 

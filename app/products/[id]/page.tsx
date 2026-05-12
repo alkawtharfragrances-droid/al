@@ -333,7 +333,7 @@ export default function ProductPage({
 </button>
               {/* WhatsApp */}
               <Link
-                href={`https://wa.me/?text=I'm interested in ${product.name}`}
+                href={`https://wa.me/917006599020?text=I'm interested in ${product.name}`}
                 target="_blank"
                 className="
                   inline-flex

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-
+import FloatingCart from "@/components/cart/FloatingCart";
 import {
   Playfair_Display,
   Poppins,
@@ -74,6 +74,7 @@ export default function RootLayout({
             <FragranceParticles />
 
             <PageTransition>
+              <FloatingCart />
 
               {children}
 
