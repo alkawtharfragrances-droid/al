@@ -1,23 +1,51 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Poppins } from "next/font/google";
-import "./globals.css";
-import "aos/dist/aos.css";
-import PageTransition from "@/components/PageTransition";
-import FragranceParticles from "@/components/FragranceParticles";
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-heading",
-});
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-body",
-});
+import {
+  Playfair_Display,
+  Poppins,
+} from "next/font/google";
+
+import "./globals.css";
+
+import "aos/dist/aos.css";
+
+import PageTransition from "@/components/PageTransition";
+
+import FragranceParticles from "@/components/FragranceParticles";
+
+import {
+  CartProvider,
+} from "@/context/CartContext";
+
+import {
+  AuthProvider,
+} from "@/components/admin/AuthProvider";
+
+const playfair =
+  Playfair_Display({
+    subsets: ["latin"],
+    variable:
+      "--font-heading",
+  });
+
+const poppins =
+  Poppins({
+    subsets: ["latin"],
+    weight: [
+      "300",
+      "400",
+      "500",
+      "600",
+      "700",
+    ],
+    variable:
+      "--font-body",
+  });
 
 export const metadata: Metadata = {
   title: "Al-Kawthar",
-  description: "Luxury Fragrance Store",
+  description:
+    "Luxury Fragrance Store",
 };
 
 export default function RootLayout({
@@ -25,17 +53,38 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
+
     <html lang="en">
+
       <body
-        className={`${playfair.variable} ${poppins.variable}`}
+        className={`
+          ${playfair.variable}
+          ${poppins.variable}
+          bg-black
+          text-white
+        `}
       >
-        <FragranceParticles />
-        <PageTransition>
-          
-  {children}
-</PageTransition>
+
+        <CartProvider>
+
+          <AuthProvider>
+
+            <FragranceParticles />
+
+            <PageTransition>
+
+              {children}
+
+            </PageTransition>
+
+          </AuthProvider>
+
+        </CartProvider>
+
       </body>
+
     </html>
   );
 }

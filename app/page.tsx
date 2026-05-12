@@ -10,6 +10,8 @@ import VideoBackground from "@/components/VideoBackground";
 import SeasonalCollections from "@/components/SeasonalCollections";
 import PageTransition from "@/components/PageTransition";
 import Footer from "@/components/Footer";
+import CampaignSection from "@/components/home/CampaignSection";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
 export default function Home() {
   return (
     <PageTransition>
@@ -25,6 +27,8 @@ export default function Home() {
       <Navbar />
 
       <Hero />
+      <CampaignSection />
+      <FeaturedProducts />
       <SeasonalCollections />
 
       <Featured />
