@@ -1,10 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
 
-import { useRouter } from "next/navigation";
+import {
+  useRouter,
+} from "next/navigation";
 
 import Link from "next/link";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import {
+  db,
+} from "@/lib/firebase";
 
 import HeroQuotes from "@/components/HeroQuotes";
 
@@ -13,22 +27,124 @@ export default function Hero() {
   const router =
     useRouter();
 
+  // Search
   const [search, setSearch] =
     useState("");
 
-  const handleSearch = () => {
+  // Products
+  const [products, setProducts] =
+    useState<any[]>([]);
+
+  // Suggestions
+  const [
+    filteredSuggestions,
+    setFilteredSuggestions,
+  ] = useState<any[]>([]);
+
+  // Fetch Products
+  useEffect(() => {
+
+    const fetchProducts =
+      async () => {
+
+        try {
+
+          const snapshot =
+            await getDocs(
+              collection(
+                db,
+                "products"
+              )
+            );
+
+          const fetchedProducts =
+            snapshot.docs.map(
+              (doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })
+            );
+
+          setProducts(
+            fetchedProducts
+          );
+
+        } catch (error) {
+
+          console.error(
+            error
+          );
+        }
+
+      };
+
+    fetchProducts();
+
+  }, []);
+
+  // Autocomplete
+  useEffect(() => {
 
     if (!search.trim()) {
 
-      router.push("/products");
+      setFilteredSuggestions(
+        []
+      );
 
       return;
     }
 
-    router.push(
-      `/products?search=${encodeURIComponent(search)}`
+    const filtered =
+      products.filter(
+        (product: any) =>
+
+          product.name
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+
+          product.brand
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+
+          product.category
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+      );
+
+    setFilteredSuggestions(
+      filtered.slice(0, 6)
     );
-  };
+
+  }, [search, products]);
+
+  // Search Handler
+  const handleSearch =
+    () => {
+
+      const trimmedSearch =
+        search.trim();
+
+      if (
+        !trimmedSearch
+      ) {
+
+        router.push(
+          "/products"
+        );
+
+        return;
+      }
+
+      router.push(
+        `/products?search=${encodeURIComponent(trimmedSearch)}`
+      );
+    };
 
   return (
 
@@ -36,16 +152,19 @@ export default function Hero() {
       className="
         relative
         min-h-screen
-        flex items-center
+        flex
+        items-center
         justify-center
         overflow-hidden
+        bg-black
       "
     >
 
-      {/* Extra Hero Overlay */}
+      {/* Overlay */}
       <div
         className="
-          absolute inset-0
+          absolute
+          inset-0
           bg-black/40
         "
       />
@@ -54,8 +173,10 @@ export default function Hero() {
       <div
         className="
           absolute
-          top-20 left-20
-          w-72 h-72
+          top-20
+          left-20
+          w-72
+          h-72
           bg-yellow-500/20
           blur-[120px]
           rounded-full
@@ -65,8 +186,10 @@ export default function Hero() {
       <div
         className="
           absolute
-          bottom-10 right-10
-          w-96 h-96
+          bottom-10
+          right-10
+          w-96
+          h-96
           bg-red-500/10
           blur-[140px]
           rounded-full
@@ -95,6 +218,7 @@ export default function Hero() {
             md:tracking-[10px]
             text-yellow-500
             mb-6
+            text-sm
           "
         >
           Luxury Fragrances
@@ -134,72 +258,126 @@ export default function Hero() {
           lingers deepest.
         </p>
 
-        {/* Search Bar */}
+        {/* Search Section */}
         <div
           className="
             mt-10
-            max-w-2xl
+            max-w-3xl
             mx-auto
+            relative
           "
         >
 
+          {/* Search Container */}
           <div
             className="
-              flex flex-col
+              flex
+              flex-col
               sm:flex-row
-              gap-4
+              gap-3
               p-3
-              rounded-[32px]
-              border border-white/10
-              bg-white/5
+              rounded-[34px]
+              border
+              border-white/10
+              bg-white/[0.04]
               backdrop-blur-2xl
               shadow-[0_10px_60px_rgba(0,0,0,0.45)]
+              transition-all
+              duration-300
+              hover:border-yellow-500/20
             "
           >
 
-            {/* Input */}
-            <input
-              type="text"
-              placeholder="Search fragrances, notes, brands..."
-              value={search}
-              onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
-              }
-              onKeyDown={(e) => {
-
-                if (e.key === "Enter") {
-
-                  handleSearch();
-                }
-
-              }}
+            {/* Input Wrapper */}
+            <div
               className="
+                flex
+                items-center
                 flex-1
-                bg-transparent
-                px-6 py-5
-                text-white
-                placeholder:text-zinc-500
-                outline-none
-                text-lg
+                px-5
               "
-            />
+            >
+
+              {/* Search Icon */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="
+                  w-5
+                  h-5
+                  text-zinc-500
+                  mr-4
+                  shrink-0
+                "
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-4.35-4.35m0 0A7.65 7.65 0 1 0 5.85 5.85a7.65 7.65 0 0 0 10.8 10.8Z"
+                />
+              </svg>
+
+              {/* Input */}
+              <input
+                type="text"
+                placeholder="Search fragrances, notes, brands..."
+                value={search}
+                onChange={(
+                  e
+                ) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
+                onKeyDown={(
+                  e
+                ) => {
+
+                  if (
+                    e.key ===
+                    "Enter"
+                  ) {
+
+                    handleSearch();
+                  }
+
+                }}
+                className="
+                  flex-1
+                  bg-transparent
+                  py-5
+                  text-white
+                  placeholder:text-zinc-500
+                  outline-none
+                  text-base
+                  md:text-lg
+                "
+              />
+
+            </div>
 
             {/* Search Button */}
             <button
-              onClick={handleSearch}
+              onClick={
+                handleSearch
+              }
               className="
-                px-8 py-5
+                px-8
+                py-5
                 rounded-[24px]
                 bg-yellow-500
                 hover:bg-yellow-400
                 text-black
                 font-semibold
-                transition duration-300
+                transition-all
+                duration-300
                 hover:scale-[1.02]
                 active:scale-[0.98]
                 shadow-[0_10px_30px_rgba(234,179,8,0.35)]
+                whitespace-nowrap
               "
             >
               Search
@@ -207,14 +385,127 @@ export default function Hero() {
 
           </div>
 
+          {/* Autocomplete Dropdown */}
+          {filteredSuggestions.length >
+            0 && (
+
+            <div
+              className="
+                absolute
+                top-full
+                left-0
+                right-0
+                mt-3
+                rounded-[28px]
+                border
+                border-white/10
+                bg-black/90
+                backdrop-blur-2xl
+                overflow-hidden
+                shadow-[0_20px_60px_rgba(0,0,0,0.6)]
+                z-50
+              "
+            >
+
+              {filteredSuggestions.map(
+                (
+                  product: any
+                ) => (
+
+                  <button
+                    key={
+                      product.id
+                    }
+                    onClick={() => {
+
+                      setSearch(
+                        product.name
+                      );
+
+                      router.push(
+                        `/products?search=${encodeURIComponent(product.name)}`
+                      );
+                    }}
+                    className="
+                      w-full
+                      flex
+                      items-center
+                      gap-4
+                      text-left
+                      px-5
+                      py-4
+                      hover:bg-yellow-500
+                      hover:text-black
+                      transition-all
+                      duration-200
+                      border-b
+                      border-white/5
+                      last:border-none
+                    "
+                  >
+
+                    {/* Product Image */}
+                    <img
+                      src={
+                        product.image
+                      }
+                      alt={
+                        product.name
+                      }
+                      className="
+                        w-12
+                        h-12
+                        object-cover
+                        rounded-xl
+                      "
+                    />
+
+                    {/* Product Info */}
+                    <div>
+
+                      <p
+                        className="
+                          font-medium
+                        "
+                      >
+                        {
+                          product.name
+                        }
+                      </p>
+
+                      <p
+                        className="
+                          text-sm
+                          text-zinc-500
+                        "
+                      >
+                        ₹
+                        {
+                          product.price
+                        }
+                      </p>
+
+                    </div>
+
+                  </button>
+
+                )
+              )}
+
+            </div>
+
+          )}
+
         </div>
 
         {/* CTA Buttons */}
         <div
           className="
             mt-10
-            flex justify-center
-            gap-4 md:gap-5
+            flex
+            justify-center
+            gap-4
+            md:gap-5
             flex-wrap
           "
         >
@@ -225,11 +516,14 @@ export default function Hero() {
               bg-yellow-500
               hover:bg-yellow-400
               text-black
-              px-6 md:px-8
-              py-3 md:py-4
+              px-6
+              md:px-8
+              py-3
+              md:py-4
               rounded-full
               font-semibold
-              transition duration-300
+              transition
+              duration-300
               hover:scale-105
               shadow-[0_10px_30px_rgba(234,179,8,0.25)]
             "
@@ -241,15 +535,19 @@ export default function Hero() {
             href="https://wa.me/917006599020"
             target="_blank"
             className="
-              border border-white/30
+              border
+              border-white/30
               backdrop-blur-xl
               bg-white/5
-              px-6 md:px-8
-              py-3 md:py-4
+              px-6
+              md:px-8
+              py-3
+              md:py-4
               rounded-full
               hover:bg-white
               hover:text-black
-              transition duration-300
+              transition
+              duration-300
             "
           >
             WhatsApp Us
@@ -258,7 +556,11 @@ export default function Hero() {
         </div>
 
         {/* Quotes */}
-        <div className="mt-16">
+        <div
+          className="
+            mt-16
+          "
+        >
 
           <HeroQuotes />
 
