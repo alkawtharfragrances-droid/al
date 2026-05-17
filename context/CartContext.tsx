@@ -12,7 +12,7 @@ type CartItem = {
 
   name: string;
 
-  price: string;
+  price: number;
 
   image: string;
 
@@ -70,6 +70,7 @@ export function CartProvider({
           storedCart
         )
       );
+
     }
 
   }, []);
@@ -84,7 +85,7 @@ export function CartProvider({
 
   }, [cart]);
 
-  // Add
+  // Add To Cart
   const addToCart =
     (item: CartItem) => {
 
@@ -93,15 +94,18 @@ export function CartProvider({
         const existing =
           prev.find(
             (p) =>
-              p.id === item.id
+              p.id === item.id &&
+              p.name === item.name
           );
 
+        // Increase quantity if same size already exists
         if (existing) {
 
           return prev.map(
             (p) =>
 
-              p.id === item.id
+              p.id === item.id &&
+              p.name === item.name
 
                 ? {
                     ...p,
@@ -111,13 +115,17 @@ export function CartProvider({
 
                 : p
           );
+
         }
 
+        // Add new item
         return [
           ...prev,
           item,
         ];
+
       });
+
     };
 
   // Remove
@@ -130,6 +138,7 @@ export function CartProvider({
             item.id !== id
         )
       );
+
     };
 
   // Increase
@@ -150,6 +159,7 @@ export function CartProvider({
             : item
         )
       );
+
     };
 
   // Decrease
@@ -157,6 +167,7 @@ export function CartProvider({
     (id: string) => {
 
       setCart((prev) =>
+
         prev
           .map((item) =>
 
@@ -169,18 +180,22 @@ export function CartProvider({
                 }
 
               : item
+
           )
           .filter(
             (item) =>
               item.quantity > 0
           )
+
       );
+
     };
 
-  // Clear
+  // Clear Cart
   const clearCart = () => {
 
     setCart([]);
+
   };
 
   return (
@@ -201,6 +216,7 @@ export function CartProvider({
     </CartContext.Provider>
 
   );
+
 }
 
 export function useCart() {
@@ -215,7 +231,9 @@ export function useCart() {
     throw new Error(
       "useCart must be used inside CartProvider"
     );
+
   }
 
   return context;
+
 }

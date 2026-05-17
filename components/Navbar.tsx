@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import Image from "next/image";
+
 import {
   Search,
   X,
@@ -188,14 +190,78 @@ export default function Navbar() {
           <Link
             href="/"
             className="
-              text-2xl
-              md:text-4xl
-              font-bold
-              tracking-wide
-              text-white
+              flex
+              items-center
+              gap-3
+              group
             "
           >
-            Al-Kawthar
+
+            {/* Logo Image */}
+            <div
+              className="
+                relative
+                w-12
+                h-12
+                md:w-14
+                md:h-14
+                transition-all
+                duration-500
+                group-hover:scale-105
+              "
+            >
+
+              <Image
+                src="/logo.png"
+                alt="Al-Kawthar"
+                fill
+                className="
+                  object-contain
+                  drop-shadow-[0_0_18px_rgba(212,175,55,0.35)]
+                "
+              />
+
+            </div>
+
+            {/* Brand Text */}
+            <div
+              className="
+                flex
+                flex-col
+                leading-none
+              "
+            >
+
+              <span
+                className="
+                  text-lg
+                  md:text-2xl
+                  tracking-[0.18em]
+                  text-[#D4AF37]
+                  font-semibold
+                  transition-all
+                  duration-300
+                  group-hover:text-yellow-400
+                "
+              >
+                AL-KAWTHAR
+              </span>
+
+              <span
+                className="
+                  hidden
+                  md:block
+                  text-[10px]
+                  tracking-[0.45em]
+                  text-white/50
+                  mt-1
+                "
+              >
+                LUXURY FRAGRANCES
+              </span>
+
+            </div>
+
           </Link>
 
           {/* Nav Links */}

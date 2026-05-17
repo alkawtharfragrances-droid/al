@@ -29,11 +29,6 @@ export default function Home() {
       <Hero />
       <CampaignSection />
       <FeaturedProducts />
-      <SeasonalCollections />
-
-      <Featured />
-
-      <BentoGrid />
 
       <Testimonials />
 

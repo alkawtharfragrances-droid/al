@@ -10,27 +10,34 @@ import Link from "next/link";
 import {
   collection,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
 
-type Product = {
+interface Product {
+
   id: string;
 
   name: string;
 
-  price: string;
-
   image: string;
-
-  description: string;
-
-  notes: string[];
 
   category: string;
 
-  featured: boolean;
-};
+  featured?: boolean;
+
+  description?: string;
+
+  notes?: string[];
+
+  decants?: {
+    size: string;
+    price: number;
+  }[];
+
+}
 
 export default function FeaturedProducts() {
 
@@ -40,44 +47,52 @@ export default function FeaturedProducts() {
   const [loading, setLoading] =
     useState(true);
 
-  const fetchProducts =
-    async () => {
+  useEffect(() => {
 
-      try {
+    const fetchProducts =
+      async () => {
 
-        const snapshot =
-          await getDocs(
+        try {
+
+          const q = query(
             collection(
               db,
               "products"
+            ),
+            where(
+              "featured",
+              "==",
+              true
             )
           );
 
-        const fetched =
-          snapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }))
-            .filter(
-              (product: any) =>
-                product.featured
+          const snapshot =
+            await getDocs(q);
+
+          const data =
+            snapshot.docs.map(
+              (doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })
             ) as Product[];
 
-        setProducts(fetched);
+          setProducts(data);
 
-      } catch (error) {
+        } catch (error) {
 
-        console.error(error);
+          console.error(
+            "Error fetching featured products:",
+            error
+          );
 
-      } finally {
+        } finally {
 
-        setLoading(false);
+          setLoading(false);
 
-      }
-    };
+        }
 
-  useEffect(() => {
+      };
 
     fetchProducts();
 
@@ -85,267 +100,260 @@ export default function FeaturedProducts() {
 
   return (
 
-    <section className="py-32 px-6">
+    <section
+      className="
+        relative
+        px-4 md:px-8 xl:px-16
+        py-20
+      "
+    >
 
-      <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          mb-10
+        "
+      >
 
-        {/* Header */}
-        <div className="mb-20 text-center">
+        <div>
 
           <p
             className="
               uppercase
-              tracking-[8px]
+              tracking-[4px]
               text-yellow-500
-              mb-6
+              text-xs
+              mb-2
             "
           >
-            Signature Collection
+            Featured Collection
           </p>
 
-          <h2 className="text-5xl md:text-6xl font-bold mb-6">
-
-            Featured Fragrances
-
-          </h2>
-
-          <p
+          <h2
             className="
-              text-zinc-400
-              max-w-2xl
-              mx-auto
-              text-lg
-              leading-relaxed
+              text-3xl
+              md:text-5xl
+              font-bold
             "
           >
-            Discover the fragrances
-            chosen to define presence,
-            memory, and identity.
-          </p>
+            Luxury Fragrances
+          </h2>
 
         </div>
 
-        {/* Loading */}
-        {loading && (
+        <Link
+          href="/products"
+          className="
+            hidden md:flex
+            items-center
+            gap-2
+            border border-white/10
+            hover:border-yellow-500/40
+            bg-white/5
+            backdrop-blur-md
+            px-5 py-3
+            rounded-full
+            transition
+          "
+        >
+          View All
+        </Link>
 
-          <div
-            className="
-              text-center
-              text-zinc-500
-              py-24
-            "
-          >
-            Loading featured fragrances...
-          </div>
+      </div>
 
-        )}
+      {/* Loading */}
+      {loading && (
 
-        {/* Empty */}
-        {!loading &&
-          products.length === 0 && (
+        <div
+          className="
+            grid
+            grid-cols-2
+            md:grid-cols-3
+            xl:grid-cols-4
+            gap-4 md:gap-6
+          "
+        >
 
-          <div
-            className="
-              text-center
-              text-zinc-500
-              py-24
-              border border-white/10
-              rounded-[36px]
-              bg-white/5
-            "
-          >
-            No featured fragrances yet.
-          </div>
+          {[...Array(8)].map(
+            (_, i) => (
 
-        )}
+              <div
+                key={i}
+                className="
+                  animate-pulse
+                  rounded-[28px]
+                  bg-zinc-900
+                  h-[360px]
+                "
+              />
 
-        {/* Products Grid */}
-        {!loading &&
-          products.length > 0 && (
+            )
+          )}
 
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-8
-            "
-          >
+        </div>
 
-            {products.map(
-              (product) => (
+      )}
 
-                <Link
-                  href={`/products/${product.id}`}
-                  key={product.id}
+      {/* Products */}
+      {!loading &&
+        products.length > 0 && (
+
+        <div
+          className="
+            grid
+            grid-cols-2
+            md:grid-cols-3
+            xl:grid-cols-4
+            gap-4 md:gap-6
+          "
+        >
+
+          {products.map(
+            (product) => (
+
+              <Link
+                href={`/products/${product.id}`}
+                key={product.id}
+                className="
+                  group
+                  relative
+                  overflow-hidden
+                  rounded-[28px]
+                  border border-white/10
+                  bg-white/5
+                  backdrop-blur-sm
+                  hover:-translate-y-1
+                  transition duration-500
+                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
+                "
+              >
+
+                {/* Image */}
+                <div
                   className="
-                    group
-                    relative
                     overflow-hidden
-                    rounded-[36px]
-                    border border-white/10
-                    bg-white/5
-                    backdrop-blur-sm
-                    hover:-translate-y-2
-                    transition duration-500
-                    shadow-[0_10px_40px_rgba(0,0,0,0.35)]
+                    h-[220px]
+                    md:h-[280px]
                   "
                 >
 
-                  {/* Image */}
-                  <div
+                  <img
+                    src={product.image}
+                    alt={product.name}
                     className="
-                      overflow-hidden
-                      h-[420px]
-                    "
-                  >
-
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="
-                        w-full h-full
-                        object-cover
-                        group-hover:scale-110
-                        transition duration-700
-                      "
-                    />
-
-                  </div>
-
-                  {/* Overlay Glow */}
-                  <div
-                    className="
-                      absolute inset-0
-                      bg-gradient-to-t
-                      from-black/70
-                      via-transparent
-                      to-transparent
-                      opacity-0
-                      group-hover:opacity-100
-                      transition duration-500
+                      w-full
+                      h-full
+                      object-cover
+                      group-hover:scale-105
+                      transition duration-700
                     "
                   />
 
-                  {/* Content */}
-                  <div className="p-8 relative z-10">
+                </div>
 
-                    {/* Category */}
+                {/* Content */}
+                <div
+                  className="
+                    p-4 md:p-5
+                  "
+                >
+
+                  {/* Category */}
+                  <p
+                    className="
+                      uppercase
+                      tracking-[3px]
+                      text-yellow-500
+                      text-[10px]
+                      mb-2
+                    "
+                  >
+                    {product.category}
+                  </p>
+
+                  {/* Name */}
+                  <h3
+                    className="
+                      text-lg
+                      md:text-xl
+                      font-bold
+                      leading-tight
+                      mb-2
+                    "
+                  >
+                    {product.name}
+                  </h3>
+
+                  {/* Size */}
+                  <p
+                    className="
+                      text-zinc-500
+                      text-sm
+                      mb-4
+                    "
+                  >
+                    {product.decants?.[0]
+                      ?.size ||
+                      "Size Unavailable"}
+                  </p>
+
+                  {/* Bottom */}
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                    "
+                  >
+
+                    {/* Price */}
                     <p
                       className="
-                        uppercase
-                        tracking-[4px]
-                        text-yellow-500
-                        text-xs
-                        mb-4
-                      "
-                    >
-                      {product.category}
-                    </p>
-
-                    {/* Name */}
-                    <h3
-                      className="
-                        text-3xl
+                        text-lg
+                        md:text-xl
                         font-bold
-                        mb-4
                       "
                     >
-                      {product.name}
-                    </h3>
-
-                    {/* Description */}
-                    <p
-                      className="
-                        text-zinc-400
-                        leading-relaxed
-                        mb-6
-                        line-clamp-3
-                      "
-                    >
-                      {product.description}
+                      {product.decants?.[0]
+                        ?.price
+                        ? `From ₹${product.decants[0].price}`
+                        : "No Price"}
                     </p>
 
-                    {/* Notes */}
+                    {/* Button */}
                     <div
                       className="
-                        flex flex-wrap
-                        gap-2
-                        mb-8
+                        px-4 py-2
+                        rounded-full
+                        bg-yellow-500
+                        group-hover:bg-yellow-400
+                        text-black
+                        text-sm
+                        font-semibold
+                        transition
                       "
                     >
-
-                      {product.notes?.map(
-                        (note) => (
-
-                          <div
-                            key={note}
-                            className="
-                              px-3 py-1
-                              rounded-full
-                              border border-white/10
-                              bg-black/20
-                              text-xs
-                              text-zinc-300
-                            "
-                          >
-                            {note}
-                          </div>
-
-                        )
-                      )}
-
-                    </div>
-
-                    {/* Bottom */}
-                    <div
-                      className="
-                        flex items-center
-                        justify-between
-                      "
-                    >
-
-                      {/* Price */}
-                      <p
-                        className="
-                          text-2xl
-                          font-bold
-                        "
-                      >
-                        ₹{product.price}
-                      </p>
-
-                      {/* CTA */}
-                      <div
-                        className="
-                          px-5 py-3
-                          rounded-full
-                          bg-yellow-500
-                          group-hover:bg-yellow-400
-                          text-black
-                          font-semibold
-                          transition
-                        "
-                      >
-                        View
-                      </div>
-
+                      View
                     </div>
 
                   </div>
 
-                </Link>
+                </div>
 
-              )
-            )}
+              </Link>
 
-          </div>
+            )
+          )}
 
-        )}
+        </div>
 
-      </div>
+      )}
 
     </section>
 
   );
+
 }

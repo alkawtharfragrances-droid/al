@@ -1,11 +1,6 @@
 "use client";
-import {
-  useCart,
-} from "@/context/CartContext";
-import {
-  useEffect,
-  useState,
-} from "react";
+
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
@@ -18,12 +13,14 @@ import {
 
 import { db } from "@/lib/firebase";
 
+import {
+  useCart,
+} from "@/context/CartContext";
+
 type Product = {
   id: string;
 
   name: string;
-
-  price: string;
 
   image: string;
 
@@ -33,7 +30,12 @@ type Product = {
 
   category: string;
 
-  featured: boolean;
+  featured?: boolean;
+
+  decants?: {
+    size: string;
+    price: number;
+  }[];
 };
 
 export default function ProductPage({
@@ -44,14 +46,93 @@ export default function ProductPage({
 
   const [product, setProduct] =
     useState<Product | null>(null);
-  const { addToCart } =
-  useCart();
+
   const [
     relatedProducts,
     setRelatedProducts,
   ] = useState<Product[]>([]);
 
-  // Fetch Related Products
+  const [
+    selectedDecant,
+    setSelectedDecant,
+  ] = useState<{
+    size: string;
+    price: number;
+  } | null>(null);
+
+  const [
+    showCartPopup,
+    setShowCartPopup,
+  ] = useState(false);
+
+  const { addToCart } =
+    useCart();
+
+  // FETCH PRODUCT
+  useEffect(() => {
+
+    const fetchProduct =
+      async () => {
+
+        try {
+
+          const resolvedParams =
+            await params;
+
+          const docRef =
+            doc(
+              db,
+              "products",
+              resolvedParams.id
+            );
+
+          const snapshot =
+            await getDoc(docRef);
+
+          if (
+            snapshot.exists()
+          ) {
+
+            const fetchedProduct = {
+              id: snapshot.id,
+              ...snapshot.data(),
+            } as Product;
+
+            setProduct(
+              fetchedProduct
+            );
+
+            // AUTO SELECT FIRST DECANT
+            if (
+              fetchedProduct.decants &&
+              fetchedProduct.decants.length > 0
+            ) {
+
+              setSelectedDecant(
+                fetchedProduct.decants[0]
+              );
+
+            }
+
+            fetchRelatedProducts(
+              fetchedProduct
+            );
+
+          }
+
+        } catch (error) {
+
+          console.error(error);
+
+        }
+
+      };
+
+    fetchProduct();
+
+  }, []);
+
+  // RELATED PRODUCTS
   const fetchRelatedProducts =
     async (
       currentProduct: Product
@@ -79,7 +160,6 @@ export default function ProductPage({
                 currentProduct.id
             ) as Product[];
 
-        // Same Category
         related =
           related.filter(
             (item) =>
@@ -87,9 +167,8 @@ export default function ProductPage({
               currentProduct.category
           );
 
-        // Limit
         related =
-          related.slice(0, 3);
+          related.slice(0, 4);
 
         setRelatedProducts(
           related
@@ -100,57 +179,10 @@ export default function ProductPage({
         console.error(error);
 
       }
+
     };
 
-  // Fetch Product
-  const fetchProduct =
-    async () => {
-
-      try {
-        const resolvedParams =
-            await params;
-        const docRef =
-          doc(
-            db,
-            "products",
-            resolvedParams.id
-          );
-
-        const snapshot =
-          await getDoc(docRef);
-
-        if (
-          snapshot.exists()
-        ) {
-
-          const fetchedProduct = {
-            id: snapshot.id,
-            ...snapshot.data(),
-          } as Product;
-
-          setProduct(
-            fetchedProduct
-          );
-
-          fetchRelatedProducts(
-            fetchedProduct
-          );
-        }
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
-    };
-
-  useEffect(() => {
-
-    fetchProduct();
-
-  }, []);
-
-  // Loading
+  // LOADING
   if (!product) {
 
     return (
@@ -158,7 +190,8 @@ export default function ProductPage({
       <main
         className="
           min-h-screen
-          flex items-center
+          flex
+          items-center
           justify-center
           bg-black
           text-white
@@ -168,13 +201,14 @@ export default function ProductPage({
       </main>
 
     );
+
   }
 
   return (
 
     <main className="min-h-screen bg-black text-white">
 
-      {/* Hero */}
+      {/* HERO */}
       <section
         className="
           relative
@@ -183,7 +217,7 @@ export default function ProductPage({
         "
       >
 
-        {/* Background */}
+        {/* IMAGE */}
         <img
           src={product.image}
           alt={product.name}
@@ -194,61 +228,74 @@ export default function ProductPage({
           "
         />
 
-        {/* Overlay */}
+        {/* OVERLAY */}
         <div
           className="
             absolute inset-0
             bg-gradient-to-t
             from-black
-            via-black/60
-            to-black/20
+            via-black/70
+            to-black/30
           "
         />
 
-        {/* Content */}
+        {/* CONTENT */}
         <div
           className="
             relative z-10
             max-w-7xl mx-auto
-            px-6
+            px-4 md:px-8
             min-h-screen
             flex items-end
-            pb-24
+            pb-20
           "
         >
 
           <div className="max-w-3xl">
 
-            {/* Category */}
+            {/* CATEGORY */}
             <p
               className="
                 uppercase
                 tracking-[6px]
                 text-yellow-500
-                mb-6
+                text-xs
+                mb-5
               "
             >
               {product.category}
             </p>
 
-            {/* Name */}
+            {/* NAME */}
             <h1
               className="
-                text-5xl
+                text-4xl
                 md:text-7xl
                 font-bold
-                mb-8
                 leading-none
+                mb-6
               "
             >
               {product.name}
             </h1>
 
-            {/* Description */}
+            {/* SIZE */}
+            <p
+              className="
+                text-zinc-400
+                text-lg
+                mb-6
+              "
+            >
+              {selectedDecant?.size ||
+                "Size Unavailable"}
+            </p>
+
+            {/* DESCRIPTION */}
             <p
               className="
                 text-zinc-300
-                text-lg md:text-xl
+                text-base md:text-xl
                 leading-relaxed
                 mb-10
               "
@@ -256,88 +303,191 @@ export default function ProductPage({
               {product.description}
             </p>
 
-            {/* Notes */}
-            <div
-              className="
-                flex flex-wrap
-                gap-3
-                mb-10
-              "
-            >
+            {/* DECANT SELECTOR */}
+            {product.decants &&
+              product.decants.length > 0 && (
 
-              {product.notes?.map(
-                (note) => (
+              <div className="mb-10">
 
-                  <div
-                    key={note}
-                    className="
-                      px-4 py-2
-                      rounded-full
-                      border border-white/10
-                      bg-white/5
-                      backdrop-blur-sm
-                      text-sm
-                    "
-                  >
-                    {note}
-                  </div>
+                <p
+                  className="
+                    uppercase
+                    tracking-[4px]
+                    text-yellow-500
+                    text-xs
+                    mb-4
+                  "
+                >
+                  Select Size
+                </p>
 
-                )
-              )}
+                <select
+                  value={
+                    selectedDecant?.size
+                  }
+                  onChange={(e) => {
 
-            </div>
+                    const found =
+                      product.decants?.find(
+                        (d) =>
+                          d.size ===
+                          e.target.value
+                      );
 
-            {/* Bottom */}
+                    if (found) {
+
+                      setSelectedDecant(
+                        found
+                      );
+
+                    }
+
+                  }}
+                  className="
+                    bg-black/40
+                    border border-white/10
+                    rounded-2xl
+                    px-5 py-4
+                    text-white
+                    outline-none
+                    min-w-[240px]
+                  "
+                >
+
+                  {product.decants.map(
+                    (
+                      decant,
+                      index
+                    ) => (
+
+                      <option
+                        key={`${decant.size}-${index}`}
+                        value={
+                          decant.size
+                        }
+                      >
+                        {decant.size}
+                        {" • "}
+                        ₹{decant.price}
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+              </div>
+
+            )}
+
+            {/* NOTES */}
+            {product.notes &&
+              product.notes.length > 0 && (
+
+              <div
+                className="
+                  flex flex-wrap
+                  gap-3
+                  mb-10
+                "
+              >
+
+                {product.notes.map(
+                  (note, index) => (
+
+                    <div
+                      key={`${note}-${index}`}
+                      className="
+                        px-4 py-2
+                        rounded-full
+                        border border-white/10
+                        bg-white/5
+                        backdrop-blur-sm
+                        text-sm
+                      "
+                    >
+                      {note}
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            )}
+
+            {/* ACTIONS */}
             <div
               className="
                 flex flex-col
                 sm:flex-row
-                gap-6
+                gap-5
                 sm:items-center
               "
             >
 
-              {/* Price */}
+              {/* PRICE */}
               <div
                 className="
-                  text-4xl
+                  text-3xl
+                  md:text-4xl
                   font-bold
                 "
               >
-                ₹{product.price}
+                ₹
+                {selectedDecant?.price ||
+                  0}
               </div>
+
+              {/* ADD TO CART */}
               <button
-  onClick={() =>
+                onClick={() => {
 
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: 1,
-    })
+                  addToCart({
+                    id: `${product.id}-${selectedDecant?.size}`,
 
-  }
-  className="
-    inline-flex
-    px-8 py-5
-    rounded-full
-    bg-white/10
-    hover:bg-white/20
-    border border-white/10
-    font-semibold
-    transition
-  "
->
-  Add To Cart
-</button>
-              {/* WhatsApp */}
+                    name: `${product.name} (${selectedDecant?.size})`,
+
+                    price:
+                      selectedDecant?.price ||
+                      0,
+
+                    image:
+                      product.image,
+
+                    quantity: 1,
+                  });
+
+                  setShowCartPopup(true);
+
+                  setTimeout(() => {
+
+                    setShowCartPopup(false);
+
+                  }, 2500);
+
+                }}
+                className="
+                  inline-flex
+                  px-7 py-4
+                  rounded-full
+                  bg-white/10
+                  hover:bg-white/20
+                  border border-white/10
+                  font-semibold
+                  transition
+                "
+              >
+                Add To Cart
+              </button>
+
+              {/* WHATSAPP */}
               <Link
-                href={`https://wa.me/917006599020?text=I'm interested in ${product.name}`}
+                href={`https://wa.me/917006599020?text=I'm interested in ${product.name} (${selectedDecant?.size})`}
                 target="_blank"
                 className="
                   inline-flex
-                  px-8 py-5
+                  px-7 py-4
                   rounded-full
                   bg-yellow-500
                   hover:bg-yellow-400
@@ -357,133 +507,83 @@ export default function ProductPage({
 
       </section>
 
-      {/* Related Products */}
-      <section className="py-32 px-6">
+      {/* CART POPUP */}
+      {showCartPopup && (
 
-        <div className="max-w-7xl mx-auto">
+        <div
+          className="
+            fixed
+            bottom-8
+            right-8
+            z-[999999]
 
-          {/* Header */}
-          <div className="mb-16">
+            px-6 py-4
 
-            <p
+            rounded-2xl
+
+            bg-zinc-950/95
+            backdrop-blur-xl
+
+            border
+            border-yellow-500/20
+
+            shadow-[0_10px_40px_rgba(0,0,0,0.45)]
+
+            animate-in
+            slide-in-from-bottom-5
+            fade-in
+
+            duration-500
+          "
+        >
+
+          <div className="flex items-center gap-4">
+
+            {/* IMAGE */}
+            <img
+              src={product.image}
+              alt={product.name}
               className="
-                uppercase
-                tracking-[8px]
-                text-yellow-500
-                mb-5
+                w-14
+                h-14
+                rounded-xl
+                object-cover
               "
-            >
-              You May Also Like
-            </p>
+            />
 
-            <h2 className="text-5xl font-bold">
+            {/* CONTENT */}
+            <div>
 
-              Related Fragrances
+              <p
+                className="
+                  text-xs
+                  uppercase
+                  tracking-[3px]
+                  text-yellow-500
+                  mb-1
+                "
+              >
+                Added To Cart
+              </p>
 
-            </h2>
+              <h3 className="font-semibold">
+                {product.name}
+              </h3>
 
-          </div>
+              <p className="text-zinc-400 text-sm">
+                {selectedDecant?.size}
+              </p>
 
-          {/* Grid */}
-          <div
-            className="
-              grid
-              md:grid-cols-2
-              xl:grid-cols-3
-              gap-8
-            "
-          >
-
-            {relatedProducts.map(
-              (item) => (
-
-                <Link
-                  href={`/products/${item.id}`}
-                  key={item.id}
-                  className="
-                    group
-                    overflow-hidden
-                    rounded-[36px]
-                    border border-white/10
-                    bg-white/5
-                    backdrop-blur-sm
-                    hover:-translate-y-2
-                    transition duration-500
-                  "
-                >
-
-                  {/* Image */}
-                  <div
-                    className="
-                      overflow-hidden
-                      h-[380px]
-                    "
-                  >
-
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="
-                        w-full h-full
-                        object-cover
-                        group-hover:scale-110
-                        transition duration-700
-                      "
-                    />
-
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-8">
-
-                    {/* Category */}
-                    <p
-                      className="
-                        uppercase
-                        tracking-[4px]
-                        text-yellow-500
-                        text-xs
-                        mb-4
-                      "
-                    >
-                      {item.category}
-                    </p>
-
-                    {/* Name */}
-                    <h3
-                      className="
-                        text-3xl
-                        font-bold
-                        mb-4
-                      "
-                    >
-                      {item.name}
-                    </h3>
-
-                    {/* Price */}
-                    <p
-                      className="
-                        text-2xl
-                        font-bold
-                      "
-                    >
-                      ₹{item.price}
-                    </p>
-
-                  </div>
-
-                </Link>
-
-              )
-            )}
+            </div>
 
           </div>
 
         </div>
 
-      </section>
+      )}
 
     </main>
 
   );
+
 }
