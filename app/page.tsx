@@ -3,11 +3,11 @@ import Hero from "@/components/Hero";
 import Featured from "@/components/Featured";
 import Testimonials from "@/components/Testimonials";
 import Lamp from "@/components/Lamp";
-import BentoGrid from "@/components/BentoGrid";
+'import BentoGrid from "@/components/BentoGrid";'
 import AOSProvider from "@/components/AOSProvider";
 import AmbientBackground from "@/components/AmbientBackground";
 import VideoBackground from "@/components/VideoBackground";
-import SeasonalCollections from "@/components/SeasonalCollections";
+'import SeasonalCollections from "@/components/SeasonalCollections";'
 import PageTransition from "@/components/PageTransition";
 import Footer from "@/components/Footer";
 import CampaignSection from "@/components/home/CampaignSection";

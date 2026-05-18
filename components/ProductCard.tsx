@@ -16,6 +16,8 @@ interface ProductProps {
 
   notes?: string[];
 
+  categories?: string[];
+
   decants?: {
     size: string;
     price: number;
@@ -27,6 +29,7 @@ export default function ProductCard({
   image,
   description,
   notes = [],
+  categories = [],
   decants = [],
 }: ProductProps) {
 
@@ -88,18 +91,35 @@ export default function ProductCard({
       {/* CONTENT */}
       <div className="p-4">
 
-        {/* CATEGORY */}
-        <p
-          className="
-            text-[10px]
-            uppercase
-            tracking-[0.3em]
-            text-amber-400
-            mb-2
-          "
-        >
-          Middle Eastern
-        </p>
+        {/* CATEGORIES */}
+
+        <div className="flex flex-wrap gap-2 mb-3">
+
+          {categories.map(
+            (category) => (
+
+              <span
+                key={category}
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.2em]
+                  text-amber-400
+                  border
+                  border-amber-400/20
+                  bg-amber-400/10
+                  px-3
+                  py-1
+                  rounded-full
+                "
+              >
+                {category}
+              </span>
+
+            )
+          )}
+
+        </div>
 
         {/* NAME */}
         <h2
@@ -179,83 +199,114 @@ export default function ProductCard({
             {/* NOTES */}
             {notes.length > 0 && (
 
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="mt-5">
 
-                {notes.map(
-                  (
-                    note,
-                    index
-                  ) => (
+                <p
+                  className="
+                    text-xs
+                    uppercase
+                    tracking-[0.3em]
+                    text-zinc-500
+                    mb-3
+                  "
+                >
+                  Notes
+                </p>
 
-                    <span
-                      key={`${note}-${index}`}
-                      className="
-                        text-xs
-                        bg-zinc-800
-                        border border-zinc-700
-                        text-zinc-300
-                        px-3 py-1
-                        rounded-full
-                      "
-                    >
+                <div className="flex flex-wrap gap-2">
 
-                      {note}
+                  {notes.map(
+                    (note) => (
 
-                    </span>
+                      <span
+                        key={note}
+                        className="
+                          px-3 py-2
+                          rounded-full
+                          bg-zinc-800
+                          text-zinc-300
+                          text-xs
+                        "
+                      >
+                        {note}
+                      </span>
 
-                  )
-                )}
+                    )
+                  )}
+
+                </div>
 
               </div>
 
             )}
 
-            {/* AVAILABLE SIZES */}
+            {/* ALL DECANTS */}
             {decants.length > 0 && (
 
-              <div className="flex flex-wrap gap-2 mt-5">
+              <div className="mt-6">
 
-                {decants.map(
-                  (
-                    decant,
-                    index
-                  ) => (
+                <p
+                  className="
+                    text-xs
+                    uppercase
+                    tracking-[0.3em]
+                    text-zinc-500
+                    mb-3
+                  "
+                >
+                  Available Sizes
+                </p>
 
-                    <div
-                      key={`${decant.size}-${index}`}
-                      className="
-                        px-3 py-1
-                        rounded-full
-                        bg-amber-400/10
-                        border border-amber-400/20
-                        text-amber-300
-                        text-xs
-                      "
-                    >
+                <div className="space-y-2">
 
-                      {decant.size}
-                      {" • "}
-                      ₹{decant.price}
+                  {decants.map(
+                    (
+                      decant,
+                      index
+                    ) => (
 
-                    </div>
+                      <div
+                        key={index}
+                        className="
+                          flex
+                          items-center
+                          justify-between
+                          bg-zinc-800
+                          rounded-2xl
+                          px-4
+                          py-3
+                        "
+                      >
 
-                  )
-                )}
+                        <span className="text-sm text-zinc-300">
+                          {decant.size}
+                        </span>
+
+                        <span className="text-sm font-semibold text-white">
+                          ₹{decant.price}
+                        </span>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
 
               </div>
 
             )}
 
-            {/* ORDER BUTTON */}
+            {/* WHATSAPP */}
             <a
               href={whatsappLink}
               target="_blank"
-              rel="noopener noreferrer"
               className="
-                mt-5
-                block
+                mt-6
                 w-full
-                text-center
+                flex
+                items-center
+                justify-center
                 bg-green-500
                 hover:bg-green-400
                 text-black
@@ -277,4 +328,5 @@ export default function ProductCard({
     </div>
 
   );
+
 }

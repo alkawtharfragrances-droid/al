@@ -13,6 +13,12 @@ import {
 
 import { db } from "@/lib/firebase";
 
+import {
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
+
 type Decant = {
   size: string;
   price: string | number;
@@ -24,7 +30,7 @@ type Product = {
   image: string;
   description: string;
   notes: string[];
-  category: string;
+  categories: string[];
   featured: boolean;
   decants?: Decant[];
 };
@@ -42,33 +48,27 @@ export default function DashboardPage() {
   ];
 
   // CREATE
-  const [name, setName] =
-    useState("");
-
+  const [name, setName] = useState("");
   const [description, setDescription] =
     useState("");
-
-  const [notes, setNotes] =
-    useState("");
-
-  const [category, setCategory] =
-    useState(categories[0]);
-
+  const [notes, setNotes] = useState("");
+  const [selectedCategories, setSelectedCategories] =
+    useState<string[]>([]);
   const [featured, setFeatured] =
     useState(false);
-
   const [file, setFile] =
     useState<File | null>(null);
-
   const [loading, setLoading] =
     useState(false);
 
+  // PRODUCTS
   const [products, setProducts] =
     useState<Product[]>([]);
 
   const [productSearch, setProductSearch] =
     useState("");
 
+  // DECANTS
   const [decants, setDecants] =
     useState<Decant[]>([
       {
@@ -77,107 +77,73 @@ export default function DashboardPage() {
       },
     ]);
 
-  // EDIT
-  const [editingId, setEditingId] =
-    useState<string | null>(null);
-
-  const [
-    showEditModal,
-    setShowEditModal,
-  ] = useState(false);
+  // EDITING
+  const [editingProduct, setEditingProduct] =
+    useState<Product | null>(null);
 
   const [editName, setEditName] =
     useState("");
 
-  const [
-    editDescription,
-    setEditDescription,
-  ] = useState("");
+  const [editDescription, setEditDescription] =
+    useState("");
 
   const [editNotes, setEditNotes] =
     useState("");
 
-  const [
-    editCategory,
-    setEditCategory,
-  ] = useState(categories[0]);
+  const [editCategories, setEditCategories] =
+    useState<string[]>([]);
 
-  const [
-    editFeatured,
-    setEditFeatured,
-  ] = useState(false);
+  const [editFeatured, setEditFeatured] =
+    useState(false);
 
-  const [
-    editDecants,
-    setEditDecants,
-  ] = useState<Decant[]>([
-    {
-      size: "",
-      price: "",
-    },
-  ]);
+  const [editFile, setEditFile] =
+    useState<File | null>(null);
 
-  const [
-    editFile,
-    setEditFile,
-  ] = useState<File | null>(null);
+  const [editDecants, setEditDecants] =
+    useState<Decant[]>([]);
 
-  // FETCH
+  // FETCH PRODUCTS
   const fetchProducts = async () => {
 
-    try {
+    const snapshot = await getDocs(
+      collection(db, "products")
+    );
 
-      const snapshot =
-        await getDocs(
-          collection(db, "products")
-        );
+    const fetchedProducts = snapshot.docs.map(
+      (doc) => {
 
-      const fetchedProducts =
-        snapshot.docs.map((doc) => ({
+        const data = doc.data();
+
+        return {
           id: doc.id,
-          ...doc.data(),
-        })) as Product[];
+          ...data,
 
-      setProducts(
-        fetchedProducts.reverse()
-      );
+          categories:
+            data.categories ||
+            (data.category
+              ? [data.category]
+              : []),
+        };
 
-    } catch (error) {
+      }
+    ) as Product[];
 
-      console.error(error);
-
-    }
+    setProducts(fetchedProducts.reverse());
 
   };
 
   useEffect(() => {
-
     fetchProducts();
-
   }, []);
 
-  // FILTERED PRODUCTS
-  const filteredProducts =
-    products.filter((product) =>
-      product.name
-        .toLowerCase()
-        .includes(
-          productSearch.toLowerCase()
-        )
-    );
-
-  // CLOUDINARY
+  // IMAGE UPLOAD
   const uploadImage = async (
     imageFile: File
   ) => {
 
-    const formData =
-      new FormData();
+    const formData = new FormData();
 
-    formData.append(
-      "file",
-      imageFile
-    );
+    formData.append("file", imageFile);
 
     formData.append(
       "upload_preset",
@@ -185,22 +151,50 @@ export default function DashboardPage() {
         .NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
     );
 
-    const response =
-      await fetch(
-        `https://api.cloudinary.com/v1_1/${
-          process.env
-            .NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-        }/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${
+        process.env
+          .NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+      }/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
     return data.secure_url;
+
+  };
+
+  // TOGGLE CATEGORY
+  const toggleCategory = (
+    category: string,
+    currentCategories: string[],
+    setter: React.Dispatch<
+      React.SetStateAction<string[]>
+    >
+  ) => {
+
+    if (
+      currentCategories.includes(category)
+    ) {
+
+      setter(
+        currentCategories.filter(
+          (c) => c !== category
+        )
+      );
+
+    } else {
+
+      setter([
+        ...currentCategories,
+        category,
+      ]);
+
+    }
 
   };
 
@@ -212,42 +206,33 @@ export default function DashboardPage() {
       setLoading(true);
 
       if (!file) {
-
-        alert(
-          "Please upload image"
-        );
-
+        alert("Please upload image");
         return;
-
       }
 
       const imageUrl =
         await uploadImage(file);
 
       await addDoc(
-        collection(
-          db,
-          "products"
-        ),
+        collection(db, "products"),
         {
-
           name,
 
           image: imageUrl,
 
           description,
 
-          category,
+          categories:
+            selectedCategories,
 
           featured,
 
-          notes:
-            notes
-              .split(",")
-              .map((note) =>
-                note.trim()
-              )
-              .filter(Boolean),
+          notes: notes
+            .split(",")
+            .map((note) =>
+              note.trim()
+            )
+            .filter(Boolean),
 
           decants:
             decants.map(
@@ -258,28 +243,16 @@ export default function DashboardPage() {
                 ),
               })
             ),
-
         }
       );
 
-      alert(
-        "Perfume Added!"
-      );
-
-      fetchProducts();
+      alert("Perfume Added");
 
       setName("");
-
       setDescription("");
-
       setNotes("");
-
-      setCategory(
-        categories[0]
-      );
-
+      setSelectedCategories([]);
       setFeatured(false);
-
       setFile(null);
 
       setDecants([
@@ -289,13 +262,11 @@ export default function DashboardPage() {
         },
       ]);
 
+      fetchProducts();
+
     } catch (error) {
 
       console.error(error);
-
-      alert(
-        "Failed to add perfume"
-      );
 
     } finally {
 
@@ -310,28 +281,20 @@ export default function DashboardPage() {
     id: string
   ) => {
 
-    try {
+    await deleteDoc(
+      doc(db, "products", id)
+    );
 
-      await deleteDoc(
-        doc(db, "products", id)
-      );
-
-      fetchProducts();
-
-    } catch (error) {
-
-      console.error(error);
-
-    }
+    fetchProducts();
 
   };
 
-  // EDIT START
-  const handleEditStart = (
+  // OPEN EDIT
+  const openEdit = (
     product: Product
   ) => {
 
-    setEditingId(product.id);
+    setEditingProduct(product);
 
     setEditName(product.name);
 
@@ -339,48 +302,33 @@ export default function DashboardPage() {
       product.description
     );
 
-    setEditCategory(
-      product.category
+    setEditNotes(
+      product.notes?.join(", ") || ""
+    );
+
+    setEditCategories(
+      product.categories || []
     );
 
     setEditFeatured(
       product.featured
     );
 
-    setEditNotes(
-      product.notes?.join(", ") || ""
-    );
-
     setEditDecants(
-      product.decants?.map(
-        (d) => ({
-          size: d.size,
-          price: String(d.price),
-        })
-      ) || [
-        {
-          size: "",
-          price: "",
-        },
-      ]
+      product.decants || []
     );
-
-    setShowEditModal(true);
 
   };
 
-  // UPDATE
+  // UPDATE PRODUCT
   const handleUpdate = async () => {
 
-    if (!editingId) return;
+    if (!editingProduct) return;
 
     try {
 
       let imageUrl =
-        products.find(
-          (p) =>
-            p.id === editingId
-        )?.image || "";
+        editingProduct.image;
 
       if (editFile) {
 
@@ -395,30 +343,28 @@ export default function DashboardPage() {
         doc(
           db,
           "products",
-          editingId
+          editingProduct.id
         ),
         {
-
           name: editName,
-
-          image: imageUrl,
 
           description:
             editDescription,
 
-          category:
-            editCategory,
+          image: imageUrl,
+
+          categories:
+            editCategories,
 
           featured:
             editFeatured,
 
-          notes:
-            editNotes
-              .split(",")
-              .map((note) =>
-                note.trim()
-              )
-              .filter(Boolean),
+          notes: editNotes
+            .split(",")
+            .map((note) =>
+              note.trim()
+            )
+            .filter(Boolean),
 
           decants:
             editDecants.map(
@@ -429,81 +375,110 @@ export default function DashboardPage() {
                 ),
               })
             ),
-
         }
       );
 
-      setShowEditModal(false);
+      alert("Updated");
 
-      setEditingId(null);
-
-      setEditFile(null);
+      setEditingProduct(null);
 
       fetchProducts();
-
-      alert("Updated!");
 
     } catch (error) {
 
       console.error(error);
 
-      alert(
-        "Failed to update"
-      );
-
     }
 
   };
 
+  // FILTER
+  const filteredProducts =
+    products.filter((product) =>
+      product.name
+        .toLowerCase()
+        .includes(
+          productSearch.toLowerCase()
+        )
+    );
+
   return (
 
-    <main className="min-h-screen bg-black text-white px-6 py-32">
+    <main className="min-h-screen bg-black text-white p-10">
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1800px] mx-auto">
 
         {/* HEADER */}
-        <div className="mb-20">
 
-          <h1 className="text-6xl font-bold mb-6">
+        <div className="mb-14">
+
+          <h1 className="text-5xl font-bold mb-3">
             Admin Dashboard
           </h1>
 
           <p className="text-zinc-400">
-            Manage your fragrance inventory.
+            Manage your fragrances
           </p>
 
         </div>
 
-        {/* ADD FORM */}
+        {/* ADD PRODUCT */}
+
         <div
           className="
-            rounded-[36px]
-            border border-white/10
             bg-white/5
-            backdrop-blur-sm
+            border
+            border-white/10
+            rounded-[32px]
             p-8
-            space-y-6
-            mb-24
+            mb-16
           "
         >
 
-          <input
-            type="text"
-            placeholder="Perfume Name"
-            value={name}
-            onChange={(e) =>
-              setName(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              bg-black/30
-              border border-white/10
-              rounded-2xl
-              px-6 py-5
-            "
-          />
+          <h2 className="text-3xl font-bold mb-8">
+            Add Perfume
+          </h2>
+
+          <div className="grid lg:grid-cols-2 gap-6">
+
+            <input
+              type="text"
+              placeholder="Perfume Name"
+              value={name}
+              onChange={(e) =>
+                setName(
+                  e.target.value
+                )
+              }
+              className="
+                bg-black/30
+                border
+                border-white/10
+                rounded-2xl
+                px-6
+                py-5
+              "
+            />
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) =>
+                setFile(
+                  e.target.files?.[0] ||
+                    null
+                )
+              }
+              className="
+                border
+                border-white/10
+                rounded-2xl
+                px-6
+                py-5
+              "
+            />
+
+          </div>
 
           <textarea
             placeholder="Description"
@@ -515,11 +490,14 @@ export default function DashboardPage() {
             }
             rows={5}
             className="
+              mt-6
               w-full
               bg-black/30
-              border border-white/10
+              border
+              border-white/10
               rounded-2xl
-              px-6 py-5
+              px-6
+              py-5
             "
           />
 
@@ -533,63 +511,181 @@ export default function DashboardPage() {
               )
             }
             className="
+              mt-6
               w-full
               bg-black/30
-              border border-white/10
+              border
+              border-white/10
               rounded-2xl
-              px-6 py-5
+              px-6
+              py-5
             "
           />
 
-          <select
-            value={category}
-            onChange={(e) =>
-              setCategory(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              bg-black/30
-              border border-white/10
-              rounded-2xl
-              px-6 py-5
-            "
-          >
+          {/* CATEGORIES */}
 
-            {categories.map((cat) => (
+          <div className="mt-8">
 
-              <option
-                key={cat}
-                value={cat}
-              >
-                {cat}
-              </option>
+            <p className="mb-4 text-zinc-400">
+              Categories
+            </p>
 
-            ))}
+            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-          </select>
+              {categories.map(
+                (category) => (
 
-          {/* IMAGE */}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) =>
-              setFile(
-                e.target.files?.[0] ||
-                  null
-              )
-            }
-            className="
-              w-full
-              border border-white/10
-              rounded-2xl
-              px-6 py-5
-            "
-          />
+                  <label
+                    key={category}
+                    className="
+                      flex
+                      items-center
+                      gap-3
+                      border
+                      border-white/10
+                      rounded-2xl
+                      px-4
+                      py-4
+                      bg-black/30
+                    "
+                  >
+
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(
+                        category
+                      )}
+                      onChange={() =>
+                        toggleCategory(
+                          category,
+                          selectedCategories,
+                          setSelectedCategories
+                        )
+                      }
+                    />
+
+                    <span className="text-sm">
+                      {category}
+                    </span>
+
+                  </label>
+
+                )
+              )}
+
+            </div>
+
+          </div>
+
+          {/* DECANTS */}
+
+          <div className="mt-8">
+
+            <p className="mb-4 text-zinc-400">
+              Sizes & Prices
+            </p>
+
+            <div className="space-y-4">
+
+              {decants.map(
+                (
+                  decant,
+                  index
+                ) => (
+
+                  <div
+                    key={index}
+                    className="
+                      grid
+                      grid-cols-2
+                      gap-4
+                    "
+                  >
+
+                    <input
+                      type="text"
+                      placeholder="5ml"
+                      value={decant.size}
+                      onChange={(e) => {
+
+                        const updated =
+                          [...decants];
+
+                        updated[index].size =
+                          e.target.value;
+
+                        setDecants(updated);
+
+                      }}
+                      className="
+                        bg-black/30
+                        border
+                        border-white/10
+                        rounded-2xl
+                        px-6
+                        py-5
+                      "
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="699"
+                      value={decant.price}
+                      onChange={(e) => {
+
+                        const updated =
+                          [...decants];
+
+                        updated[index].price =
+                          e.target.value;
+
+                        setDecants(updated);
+
+                      }}
+                      className="
+                        bg-black/30
+                        border
+                        border-white/10
+                        rounded-2xl
+                        px-6
+                        py-5
+                      "
+                    />
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setDecants([
+                  ...decants,
+                  {
+                    size: "",
+                    price: "",
+                  },
+                ])
+              }
+              className="
+                mt-4
+                px-5
+                py-3
+                rounded-2xl
+                bg-white/10
+              "
+            >
+              + Add Size
+            </button>
+
+          </div>
 
           {/* FEATURED */}
-          <label className="flex items-center gap-3">
+
+          <label className="flex items-center gap-3 mt-8">
 
             <input
               type="checkbox"
@@ -605,116 +701,18 @@ export default function DashboardPage() {
 
           </label>
 
-          {/* DECANTS */}
-          <div className="space-y-4">
-
-            <p className="text-zinc-400">
-              Sizes & Prices
-            </p>
-
-            {decants.map(
-              (
-                decant,
-                index
-              ) => (
-
-                <div
-                  key={index}
-                  className="
-                    grid
-                    grid-cols-2
-                    gap-4
-                  "
-                >
-
-                  <input
-                    type="text"
-                    placeholder="5ml"
-                    value={decant.size}
-                    onChange={(e) => {
-
-                      const updated =
-                        [...decants];
-
-                      updated[index].size =
-                        e.target.value;
-
-                      setDecants(
-                        updated
-                      );
-
-                    }}
-                    className="
-                      w-full
-                      bg-black/30
-                      border border-white/10
-                      rounded-2xl
-                      px-6 py-5
-                    "
-                  />
-
-                  <input
-                    type="number"
-                    placeholder="699"
-                    value={decant.price}
-                    onChange={(e) => {
-
-                      const updated =
-                        [...decants];
-
-                      updated[index].price =
-                        e.target.value;
-
-                      setDecants(
-                        updated
-                      );
-
-                    }}
-                    className="
-                      w-full
-                      bg-black/30
-                      border border-white/10
-                      rounded-2xl
-                      px-6 py-5
-                    "
-                  />
-
-                </div>
-
-              )
-            )}
-
-            <button
-              type="button"
-              onClick={() =>
-                setDecants([
-                  ...decants,
-                  {
-                    size: "",
-                    price: "",
-                  },
-                ])
-              }
-              className="
-                px-5 py-3
-                rounded-2xl
-                bg-white/10
-              "
-            >
-              + Add Size
-            </button>
-
-          </div>
+          {/* BUTTON */}
 
           <button
             onClick={handleSubmit}
             disabled={loading}
             className="
-              w-full
-              py-5
-              rounded-2xl
+              mt-8
               bg-yellow-500
               text-black
+              px-8
+              py-5
+              rounded-2xl
               font-bold
             "
           >
@@ -726,28 +724,26 @@ export default function DashboardPage() {
         </div>
 
         {/* PRODUCTS */}
-        <section>
 
-          <div
-            className="
-              flex
-              flex-col
-              lg:flex-row
-              lg:items-center
-              justify-between
-              gap-6
-              mb-10
-            "
-          >
+        <div className="mt-20">
 
-            <h2 className="text-5xl font-bold">
-              Added Products
-            </h2>
+          <div className="flex items-center justify-between mb-10">
 
-            {/* SEARCH */}
+            <div>
+
+              <h2 className="text-4xl font-bold">
+                Products
+              </h2>
+
+              <p className="text-zinc-500 mt-2">
+                Manage existing perfumes
+              </p>
+
+            </div>
+
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search perfumes..."
               value={productSearch}
               onChange={(e) =>
                 setProductSearch(
@@ -755,21 +751,30 @@ export default function DashboardPage() {
                 )
               }
               className="
-                w-full
-                lg:w-[360px]
+                w-[320px]
                 bg-black/30
-                border border-white/10
+                border
+                border-white/10
                 rounded-2xl
-                px-6 py-4
+                px-6
+                py-4
                 outline-none
-                focus:border-yellow-500
-                transition
               "
             />
 
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* PRODUCTS GRID */}
+
+          <div
+            className="
+              grid
+              grid-cols-2
+              md:grid-cols-3
+              xl:grid-cols-4
+              gap-5
+            "
+          >
 
             {filteredProducts.map(
               (product) => (
@@ -777,43 +782,95 @@ export default function DashboardPage() {
                 <div
                   key={product.id}
                   className="
-                    rounded-[36px]
-                    overflow-hidden
-                    border border-white/10
                     bg-white/5
+                    border
+                    border-white/10
+                    rounded-[28px]
+                    overflow-hidden
                   "
                 >
 
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="
-                      w-full
-                      h-[420px]
-                      object-cover
-                    "
-                  />
+                  <div className="relative">
 
-                  <div className="p-6">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="
+                        w-full
+                        h-[220px]
+                        object-cover
+                      "
+                    />
 
-                    <p className="
-                      text-yellow-500
-                      uppercase
-                      tracking-[4px]
-                      text-sm
-                      mb-2
-                    ">
-                      {product.category}
-                    </p>
+                    {product.featured && (
 
-                    <h2 className="text-3xl font-bold mb-4">
+                      <div
+                        className="
+                          absolute
+                          top-3
+                          left-3
+                          px-3
+                          py-1
+                          rounded-full
+                          bg-yellow-500
+                          text-black
+                          text-xs
+                          font-semibold
+                        "
+                      >
+                        Featured
+                      </div>
+
+                    )}
+
+                  </div>
+
+                  <div className="p-4">
+
+                    {/* CATEGORIES */}
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+
+                      {product.categories?.map(
+                        (category) => (
+
+                          <span
+                            key={category}
+                            className="
+                              text-[10px]
+                              px-2
+                              py-1
+                              rounded-full
+                              bg-yellow-500/10
+                              text-yellow-500
+                              border
+                              border-yellow-500/20
+                            "
+                          >
+                            {category}
+                          </span>
+
+                        )
+                      )}
+
+                    </div>
+
+                    {/* NAME */}
+
+                    <h3
+                      className="
+                        text-lg
+                        font-bold
+                        mb-3
+                        line-clamp-1
+                      "
+                    >
                       {product.name}
-                    </h2>
+                    </h3>
 
-                    <div className="
-                      flex flex-wrap
-                      gap-2 mb-6
-                    ">
+                    {/* DECANTS */}
+
+                    <div className="space-y-2 mb-5">
 
                       {product.decants?.map(
                         (
@@ -822,19 +879,27 @@ export default function DashboardPage() {
                         ) => (
 
                           <div
-                            key={`${decant.size}-${index}`}
+                            key={index}
                             className="
-                              px-4 py-2
-                              rounded-full
-                              bg-yellow-500/10
-                              border border-yellow-500/20
-                              text-yellow-500
+                              flex
+                              items-center
+                              justify-between
                               text-sm
+                              bg-white/5
+                              rounded-xl
+                              px-3
+                              py-2
                             "
                           >
-                            {decant.size}
-                            {" • "}
-                            ₹{decant.price}
+
+                            <span>
+                              {decant.size}
+                            </span>
+
+                            <span className="text-yellow-500 font-semibold">
+                              ₹{decant.price}
+                            </span>
+
                           </div>
 
                         )
@@ -842,22 +907,31 @@ export default function DashboardPage() {
 
                     </div>
 
-                    <div className="flex gap-4">
+                    {/* BUTTONS */}
+
+                    <div className="flex gap-3">
 
                       <button
                         onClick={() =>
-                          handleEditStart(
-                            product
-                          )
+                          openEdit(product)
                         }
                         className="
                           flex-1
-                          py-3
-                          rounded-2xl
+                          py-2
+                          rounded-xl
                           bg-white/10
+                          hover:bg-white/20
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
                         "
                       >
+
+                        <Pencil size={16} />
+
                         Edit
+
                       </button>
 
                       <button
@@ -868,12 +942,21 @@ export default function DashboardPage() {
                         }
                         className="
                           flex-1
-                          py-3
-                          rounded-2xl
+                          py-2
+                          rounded-xl
                           bg-red-500
+                          hover:bg-red-600
+                          flex
+                          items-center
+                          justify-center
+                          gap-2
                         "
                       >
+
+                        <Trash2 size={16} />
+
                         Delete
+
                       </button>
 
                     </div>
@@ -887,9 +970,343 @@ export default function DashboardPage() {
 
           </div>
 
-        </section>
+        </div>
 
       </div>
+
+      {/* EDIT MODAL */}
+
+      {editingProduct && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/80
+            backdrop-blur-sm
+            z-50
+            overflow-y-auto
+            p-10
+          "
+        >
+
+          <div
+            className="
+              max-w-4xl
+              mx-auto
+              bg-zinc-950
+              border
+              border-white/10
+              rounded-[32px]
+              p-8
+            "
+          >
+
+            <div className="flex justify-between items-center mb-8">
+
+              <h2 className="text-3xl font-bold">
+                Edit Perfume
+              </h2>
+
+              <button
+                onClick={() =>
+                  setEditingProduct(null)
+                }
+                className="
+                  w-12
+                  h-12
+                  rounded-xl
+                  bg-white/10
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                <X size={20} />
+              </button>
+
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) =>
+                  setEditName(
+                    e.target.value
+                  )
+                }
+                className="
+                  bg-black/30
+                  border
+                  border-white/10
+                  rounded-2xl
+                  px-6
+                  py-5
+                "
+              />
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setEditFile(
+                    e.target.files?.[0] ||
+                      null
+                  )
+                }
+                className="
+                  border
+                  border-white/10
+                  rounded-2xl
+                  px-6
+                  py-5
+                "
+              />
+
+            </div>
+
+            <textarea
+              rows={5}
+              value={editDescription}
+              onChange={(e) =>
+                setEditDescription(
+                  e.target.value
+                )
+              }
+              className="
+                mt-6
+                w-full
+                bg-black/30
+                border
+                border-white/10
+                rounded-2xl
+                px-6
+                py-5
+              "
+            />
+
+            <input
+              type="text"
+              value={editNotes}
+              onChange={(e) =>
+                setEditNotes(
+                  e.target.value
+                )
+              }
+              className="
+                mt-6
+                w-full
+                bg-black/30
+                border
+                border-white/10
+                rounded-2xl
+                px-6
+                py-5
+              "
+            />
+
+            {/* EDIT CATEGORIES */}
+
+            <div className="mt-8">
+
+              <p className="mb-4 text-zinc-400">
+                Categories
+              </p>
+
+              <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
+
+                {categories.map(
+                  (category) => (
+
+                    <label
+                      key={category}
+                      className="
+                        flex
+                        items-center
+                        gap-3
+                        border
+                        border-white/10
+                        rounded-2xl
+                        px-4
+                        py-4
+                        bg-black/30
+                      "
+                    >
+
+                      <input
+                        type="checkbox"
+                        checked={editCategories.includes(
+                          category
+                        )}
+                        onChange={() =>
+                          toggleCategory(
+                            category,
+                            editCategories,
+                            setEditCategories
+                          )
+                        }
+                      />
+
+                      <span className="text-sm">
+                        {category}
+                      </span>
+
+                    </label>
+
+                  )
+                )}
+
+              </div>
+
+            </div>
+
+            {/* EDIT DECANTS */}
+
+            <div className="mt-8">
+
+              <p className="mb-4 text-zinc-400">
+                Sizes & Prices
+              </p>
+
+              <div className="space-y-4">
+
+                {editDecants.map(
+                  (
+                    decant,
+                    index
+                  ) => (
+
+                    <div
+                      key={index}
+                      className="
+                        grid
+                        grid-cols-2
+                        gap-4
+                      "
+                    >
+
+                      <input
+                        type="text"
+                        value={decant.size}
+                        onChange={(e) => {
+
+                          const updated =
+                            [...editDecants];
+
+                          updated[index].size =
+                            e.target.value;
+
+                          setEditDecants(updated);
+
+                        }}
+                        className="
+                          bg-black/30
+                          border
+                          border-white/10
+                          rounded-2xl
+                          px-6
+                          py-5
+                        "
+                      />
+
+                      <input
+                        type="number"
+                        value={decant.price}
+                        onChange={(e) => {
+
+                          const updated =
+                            [...editDecants];
+
+                          updated[index].price =
+                            e.target.value;
+
+                          setEditDecants(updated);
+
+                        }}
+                        className="
+                          bg-black/30
+                          border
+                          border-white/10
+                          rounded-2xl
+                          px-6
+                          py-5
+                        "
+                      />
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setEditDecants([
+                    ...editDecants,
+                    {
+                      size: "",
+                      price: "",
+                    },
+                  ])
+                }
+                className="
+                  mt-4
+                  px-5
+                  py-3
+                  rounded-2xl
+                  bg-white/10
+                "
+              >
+                + Add Size
+              </button>
+
+            </div>
+
+            {/* FEATURED */}
+
+            <label className="flex items-center gap-3 mt-8">
+
+              <input
+                type="checkbox"
+                checked={editFeatured}
+                onChange={(e) =>
+                  setEditFeatured(
+                    e.target.checked
+                  )
+                }
+              />
+
+              Featured Product
+
+            </label>
+
+            {/* SAVE */}
+
+            <button
+              onClick={handleUpdate}
+              className="
+                mt-8
+                w-full
+                bg-yellow-500
+                text-black
+                px-8
+                py-5
+                rounded-2xl
+                font-bold
+              "
+            >
+              Save Changes
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
 
     </main>
 

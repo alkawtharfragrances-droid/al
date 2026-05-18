@@ -28,7 +28,7 @@ type Product = {
 
   notes: string[];
 
-  category: string;
+  categories: string[];
 
   featured?: boolean;
 
@@ -93,9 +93,18 @@ export default function ProductPage({
             snapshot.exists()
           ) {
 
+            const data =
+              snapshot.data();
+
             const fetchedProduct = {
               id: snapshot.id,
-              ...snapshot.data(),
+              ...data,
+
+              categories:
+                data.categories ||
+                (data.category
+                  ? [data.category]
+                  : []),
             } as Product;
 
             setProduct(
@@ -150,10 +159,23 @@ export default function ProductPage({
 
         let related =
           snapshot.docs
-            .map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }))
+            .map((doc) => {
+
+              const data =
+                doc.data();
+
+              return {
+                id: doc.id,
+                ...data,
+
+                categories:
+                  data.categories ||
+                  (data.category
+                    ? [data.category]
+                    : []),
+              };
+
+            })
             .filter(
               (item: any) =>
                 item.id !==
@@ -163,8 +185,13 @@ export default function ProductPage({
         related =
           related.filter(
             (item) =>
-              item.category ===
-              currentProduct.category
+
+              item.categories?.some(
+                (category) =>
+                  currentProduct.categories?.includes(
+                    category
+                  )
+              )
           );
 
         related =
@@ -253,18 +280,37 @@ export default function ProductPage({
 
           <div className="max-w-3xl">
 
-            {/* CATEGORY */}
-            <p
-              className="
-                uppercase
-                tracking-[6px]
-                text-yellow-500
-                text-xs
-                mb-5
-              "
-            >
-              {product.category}
-            </p>
+            {/* CATEGORIES */}
+            <div className="flex flex-wrap gap-3 mb-5">
+
+              {product.categories?.map(
+                (
+                  category,
+                  index
+                ) => (
+
+                  <div
+                    key={`${category}-${index}`}
+                    className="
+                      uppercase
+                      tracking-[4px]
+                      text-yellow-500
+                      text-xs
+                      px-4
+                      py-2
+                      rounded-full
+                      border
+                      border-yellow-500/20
+                      bg-yellow-500/10
+                    "
+                  >
+                    {category}
+                  </div>
+
+                )
+              )}
+
+            </div>
 
             {/* NAME */}
             <h1

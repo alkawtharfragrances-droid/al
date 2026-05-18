@@ -12,12 +12,19 @@ import { db } from "@/lib/firebase";
 
 interface Product {
   id: string;
+
   name: string;
+
   image: string;
-  category: string;
+
+  categories?: string[];
+
   description?: string;
+
   notes?: string[];
+
   featured?: boolean;
+
   decants?: {
     size: string;
     price: number;
@@ -55,31 +62,29 @@ export default function ProductsPage() {
   // CATEGORY IMAGES
   const categoryImages: Record<string, string> = {
 
-    all:
-      "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1200&auto=format&fit=crop",
+  all:
+    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1600&auto=format&fit=crop",
 
-    middleeastern:
-      "https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=1200&auto=format&fit=crop",
+ middleeastern:
+  "https://images.pexels.com/photos/2291596/pexels-photo-2291596.jpeg",
+  designer:
+    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1600&auto=format&fit=crop",
 
-    designer:
-      "https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=1200&auto=format&fit=crop",
+  niche:
+    "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1600&auto=format&fit=crop",
 
-    niche:
-      "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1200&auto=format&fit=crop",
+  french:
+    "https://images.unsplash.com/photo-1431274172761-fca41d930114?q=80&w=1600&auto=format&fit=crop",
 
-    french:
-      "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=1200&auto=format&fit=crop",
+  partials:
+    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1600&auto=format&fit=crop",
 
-    partials:
-      "https://images.unsplash.com/photo-1619994403073-2cec4b5d4b20?q=80&w=1200&auto=format&fit=crop",
+  attar:
+    "https://images.unsplash.com/photo-1615634262417-d53102d6f7d9?q=80&w=1600&auto=format&fit=crop",
 
-    attar:
-      "https://images.unsplash.com/photo-1615634262417-d53102d6f7d9?q=80&w=1200&auto=format&fit=crop",
-
-    bakhooressentialoils:
-      "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1200&auto=format&fit=crop",
-  };
-
+  bakhooressentialoils:
+    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1600&auto=format&fit=crop",
+};
   useEffect(() => {
 
     const fetchProducts =
@@ -93,10 +98,28 @@ export default function ProductsPage() {
             );
 
           const data =
-            snapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            })) as Product[];
+            snapshot.docs.map((doc) => {
+
+              const productData =
+                doc.data();
+
+              return {
+                id: doc.id,
+                ...productData,
+
+                // SUPPORT OLD + NEW PRODUCTS
+                categories:
+                  productData.categories ||
+                  (
+                    productData.category
+                      ? [
+                          productData.category,
+                        ]
+                      : []
+                  ),
+              };
+
+            }) as Product[];
 
           setProducts(data);
 
@@ -144,15 +167,19 @@ export default function ProductsPage() {
                 search.toLowerCase()
               );
 
+          // UPDATED MULTI CATEGORY FILTER
           const matchesCategory =
             selectedCategory === "All"
               ? true
-              : product.category
-                  ?.toLowerCase()
-                  .trim() ===
-                selectedCategory
-                  .toLowerCase()
-                  .trim();
+              : product.categories?.some(
+                  (category) =>
+                    category
+                      .toLowerCase()
+                      .trim() ===
+                    selectedCategory
+                      .toLowerCase()
+                      .trim()
+                );
 
           return (
             matchesSearch &&
@@ -162,7 +189,6 @@ export default function ProductsPage() {
         });
 
       // SORTING
-
       if (sortBy === "price-low") {
 
         filtered.sort(
@@ -444,153 +470,232 @@ export default function ProductsPage() {
           >
 
             {filteredProducts.map(
-              (product) => (
+              (product) => {
 
-                <Link
-                  href={`/products/${product.id}`}
-                  key={product.id}
-                  className="
-                    group
-                    relative
-                    overflow-hidden
-                    rounded-2xl
-                    border border-white/10
-                    bg-white/5
-                    backdrop-blur-sm
-                    hover:-translate-y-1
-                    transition duration-500
-                    shadow-[0_8px_24px_rgba(0,0,0,0.25)]
-                  "
-                >
+                // GET MAX DECANT
+                const maxDecant =
+                  product.decants &&
+                  product.decants.length > 0
+                    ? [...product.decants].sort(
+                        (a, b) => {
 
-                  {/* IMAGE */}
-                  <div
+                          const aValue =
+                            parseInt(
+                              a.size.replace(/\D/g, "")
+                            ) || 0;
+
+                          const bValue =
+                            parseInt(
+                              b.size.replace(/\D/g, "")
+                            ) || 0;
+
+                          return bValue - aValue;
+
+                        }
+                      )[0]
+                    : null;
+
+                return (
+
+                  <Link
+                    href={`/products/${product.id}`}
+                    key={product.id}
                     className="
+                      group
+                      relative
                       overflow-hidden
-                      h-[180px]
-                      md:h-[240px]
+                      rounded-2xl
+                      border border-white/10
+                      bg-white/5
+                      backdrop-blur-sm
+                      hover:-translate-y-1
+                      transition duration-500
+                      shadow-[0_8px_24px_rgba(0,0,0,0.25)]
                     "
                   >
 
-                    <img
-                      src={product.image}
-                      alt={product.name}
+                    {/* IMAGE */}
+                    <div
                       className="
-                        w-full
-                        h-full
-                        object-cover
-                        group-hover:scale-105
-                        transition duration-700
+                        overflow-hidden
+                        h-[180px]
+                        md:h-[240px]
+                      "
+                    >
+
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="
+                          w-full
+                          h-full
+                          object-cover
+                          group-hover:scale-105
+                          transition duration-700
+                        "
+                      />
+
+                    </div>
+
+                    {/* OVERLAY */}
+                    <div
+                      className="
+                        absolute inset-0
+                        bg-gradient-to-t
+                        from-black/30
+                        to-transparent
+                        opacity-0
+                        group-hover:opacity-100
+                        transition duration-500
                       "
                     />
 
-                  </div>
-
-                  {/* OVERLAY */}
-                  <div
-                    className="
-                      absolute inset-0
-                      bg-gradient-to-t
-                      from-black/30
-                      to-transparent
-                      opacity-0
-                      group-hover:opacity-100
-                      transition duration-500
-                    "
-                  />
-
-                  {/* CONTENT */}
-                  <div
-                    className="
-                      p-4
-                      relative z-10
-                    "
-                  >
-
-                    {/* CATEGORY */}
-                    <p
-                      className="
-                        uppercase
-                        tracking-[3px]
-                        text-yellow-500
-                        text-[10px]
-                        mb-2
-                      "
-                    >
-                      {product.category}
-                    </p>
-
-                    {/* NAME */}
-                    <h3
-                      className="
-                        text-sm
-                        md:text-base
-                        font-bold
-                        leading-snug
-                        mb-2
-                        line-clamp-2
-                      "
-                    >
-                      {product.name}
-                    </h3>
-
-                    {/* SIZE */}
-                    <p
-                      className="
-                        text-zinc-500
-                        text-xs
-                        mb-4
-                      "
-                    >
-                      {product.decants?.[0]?.size ||
-                        "Size Unavailable"}
-                    </p>
-
-                    {/* BOTTOM */}
+                    {/* CONTENT */}
                     <div
                       className="
-                        flex
-                        items-center
-                        justify-between
+                        p-4
+                        relative z-10
                       "
                     >
 
-                      {/* PRICE */}
-                      <p
+                      {/* DYNAMIC CATEGORIES */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+
+                        {product.categories?.map(
+                          (
+                            category,
+                            index
+                          ) => (
+
+                            <span
+                              key={`${category}-${index}`}
+                              className="
+                                uppercase
+                                tracking-[2px]
+                                text-yellow-500
+                                text-[9px]
+                                px-2 py-1
+                                rounded-full
+                                border
+                                border-yellow-500/20
+                                bg-yellow-500/10
+                              "
+                            >
+                              {category}
+                            </span>
+
+                          )
+                        )}
+
+                      </div>
+
+                      {/* NAME */}
+                      <h3
                         className="
-                          text-base
-                          md:text-lg
+                          text-sm
+                          md:text-base
                           font-bold
+                          leading-snug
+                          mb-4
+                          line-clamp-2
                         "
                       >
-                        {product.decants?.[0]?.price
-                          ? `From ₹${product.decants[0].price}`
-                          : "No Price"}
-                      </p>
+                        {product.name}
+                      </h3>
 
-                      {/* BUTTON */}
+                      {/* HIGHLIGHTED FULL BOTTLE */}
+                      {maxDecant && (
+
+                        <div
+                          className="
+                            rounded-2xl
+
+                            border
+                            border-yellow-500/20
+
+                            bg-yellow-500/10
+
+                            px-4
+                            py-3
+
+                            mb-4
+                          "
+                        >
+
+                          <p
+                            className="
+                              text-[9px]
+                              uppercase
+                              tracking-[3px]
+                              text-yellow-500
+                              mb-1
+                            "
+                          >
+                            Full Bottle
+                          </p>
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                            "
+                          >
+
+                            <span
+                              className="
+                                text-sm
+                                text-white
+                                font-medium
+                              "
+                            >
+                              {maxDecant.size}
+                            </span>
+
+                            <span
+                              className="
+                                text-lg
+                                font-bold
+                                text-yellow-500
+                              "
+                            >
+                              ₹{maxDecant.price}
+                            </span>
+
+                          </div>
+
+                        </div>
+
+                      )}
+
+                      {/* VIEW */}
                       <div
                         className="
-                          px-3 py-1.5
-                          rounded-full
-                          bg-yellow-500
-                          group-hover:bg-yellow-400
-                          text-black
-                          text-xs
-                          font-semibold
-                          transition
+                          flex
+                          justify-end
                         "
                       >
-                        View
+
+                        <div
+                          className="
+                            text-xs
+                            text-yellow-500
+                            uppercase
+                            tracking-[2px]
+                          "
+                        >
+                          View
+                        </div>
+
                       </div>
 
                     </div>
 
-                  </div>
+                  </Link>
 
-                </Link>
+                );
 
-              )
+              }
             )}
 
           </div>
@@ -603,12 +708,19 @@ export default function ProductsPage() {
 
           <div className="text-center py-24">
 
-            <h3 className="text-2xl font-bold mb-3">
+            <h3
+              className="
+                text-3xl
+                font-bold
+                mb-4
+              "
+            >
               No Fragrances Found
             </h3>
 
             <p className="text-zinc-500">
-              Try adjusting your search or filters.
+              Try adjusting your search or
+              filters.
             </p>
 
           </div>
