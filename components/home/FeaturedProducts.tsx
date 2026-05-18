@@ -24,7 +24,7 @@ interface Product {
 
   image: string;
 
-  category: string;
+  categories?: string[];
 
   featured?: boolean;
 
@@ -71,10 +71,28 @@ export default function FeaturedProducts() {
 
           const data =
             snapshot.docs.map(
-              (doc) => ({
-                id: doc.id,
-                ...doc.data(),
-              })
+              (doc) => {
+
+                const productData =
+                  doc.data();
+
+                return {
+                  id: doc.id,
+                  ...productData,
+
+                  // SUPPORT OLD + NEW CATEGORY SYSTEM
+                  categories:
+                    productData.categories ||
+                    (
+                      productData.category
+                        ? [
+                            productData.category,
+                          ]
+                        : []
+                    ),
+                };
+
+              }
             ) as Product[];
 
           setProducts(data);
@@ -212,140 +230,224 @@ export default function FeaturedProducts() {
         >
 
           {products.map(
-            (product) => (
+            (product) => {
 
-              <Link
-                href={`/products/${product.id}`}
-                key={product.id}
-                className="
-                  group
-                  relative
-                  overflow-hidden
-                  rounded-[28px]
-                  border border-white/10
-                  bg-white/5
-                  backdrop-blur-sm
-                  hover:-translate-y-1
-                  transition duration-500
-                  shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                "
-              >
+              // GET MAX DECANT
+              const maxDecant =
+                product.decants &&
+                product.decants.length > 0
+                  ? [...product.decants].sort(
+                      (a, b) => {
 
-                {/* Image */}
-                <div
+                        const aValue =
+                          parseInt(
+                            a.size.replace(/\D/g, "")
+                          ) || 0;
+
+                        const bValue =
+                          parseInt(
+                            b.size.replace(/\D/g, "")
+                          ) || 0;
+
+                        return bValue - aValue;
+
+                      }
+                    )[0]
+                  : null;
+
+              return (
+
+                <Link
+                  href={`/products/${product.id}`}
+                  key={product.id}
                   className="
+                    group
+                    relative
                     overflow-hidden
-                    h-[220px]
-                    md:h-[280px]
+                    rounded-[28px]
+                    border border-white/10
+                    bg-white/5
+                    backdrop-blur-sm
+                    hover:-translate-y-1
+                    transition duration-500
+                    shadow-[0_10px_30px_rgba(0,0,0,0.25)]
                   "
                 >
 
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="
-                      w-full
-                      h-full
-                      object-cover
-                      group-hover:scale-105
-                      transition duration-700
-                    "
-                  />
-
-                </div>
-
-                {/* Content */}
-                <div
-                  className="
-                    p-4 md:p-5
-                  "
-                >
-
-                  {/* Category */}
-                  <p
-                    className="
-                      uppercase
-                      tracking-[3px]
-                      text-yellow-500
-                      text-[10px]
-                      mb-2
-                    "
-                  >
-                    {product.category}
-                  </p>
-
-                  {/* Name */}
-                  <h3
-                    className="
-                      text-lg
-                      md:text-xl
-                      font-bold
-                      leading-tight
-                      mb-2
-                    "
-                  >
-                    {product.name}
-                  </h3>
-
-                  {/* Size */}
-                  <p
-                    className="
-                      text-zinc-500
-                      text-sm
-                      mb-4
-                    "
-                  >
-                    {product.decants?.[0]
-                      ?.size ||
-                      "Size Unavailable"}
-                  </p>
-
-                  {/* Bottom */}
+                  {/* Image */}
                   <div
                     className="
-                      flex
-                      items-center
-                      justify-between
+                      overflow-hidden
+                      h-[220px]
+                      md:h-[280px]
                     "
                   >
 
-                    {/* Price */}
-                    <p
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="
+                        w-full
+                        h-full
+                        object-cover
+                        group-hover:scale-105
+                        transition duration-700
+                      "
+                    />
+
+                  </div>
+
+                  {/* Content */}
+                  <div
+                    className="
+                      p-4 md:p-5
+                    "
+                  >
+
+                    {/* DYNAMIC CATEGORIES */}
+                    <div className="flex flex-wrap gap-2 mb-3">
+
+                      {product.categories?.map(
+                        (
+                          category,
+                          index
+                        ) => (
+
+                          <span
+                            key={`${category}-${index}`}
+                            className="
+                              uppercase
+                              tracking-[2px]
+                              text-yellow-500
+                              text-[9px]
+                              px-2 py-1
+                              rounded-full
+                              border
+                              border-yellow-500/20
+                              bg-yellow-500/10
+                            "
+                          >
+                            {category}
+                          </span>
+
+                        )
+                      )}
+
+                    </div>
+
+                    {/* Name */}
+                    <h3
                       className="
                         text-lg
                         md:text-xl
                         font-bold
+                        leading-tight
+                        mb-4
                       "
                     >
-                      {product.decants?.[0]
-                        ?.price
-                        ? `From ₹${product.decants[0].price}`
-                        : "No Price"}
-                    </p>
+                      {product.name}
+                    </h3>
 
-                    {/* Button */}
+                    {/* FULL BOTTLE HIGHLIGHT */}
+                    {maxDecant && (
+
+                      <div
+                        className="
+                          rounded-2xl
+
+                          border
+                          border-yellow-500/20
+
+                          bg-yellow-500/10
+
+                          px-4
+                          py-3
+
+                          mb-4
+                        "
+                      >
+
+                        <p
+                          className="
+                            text-[9px]
+                            uppercase
+                            tracking-[3px]
+                            text-yellow-500
+                            mb-1
+                          "
+                        >
+                          Full Bottle
+                        </p>
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                          "
+                        >
+
+                          <span
+                            className="
+                              text-sm
+                              text-white
+                              font-medium
+                            "
+                          >
+                            {maxDecant.size}
+                          </span>
+
+                          <span
+                            className="
+                              text-lg
+                              md:text-xl
+                              font-bold
+                              text-yellow-500
+                            "
+                          >
+                            ₹{maxDecant.price}
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+                    {/* Bottom */}
                     <div
                       className="
-                        px-4 py-2
-                        rounded-full
-                        bg-yellow-500
-                        group-hover:bg-yellow-400
-                        text-black
-                        text-sm
-                        font-semibold
-                        transition
+                        flex
+                        items-center
+                        justify-end
                       "
                     >
-                      View
+
+                      {/* Button */}
+                      <div
+                        className="
+                          px-4 py-2
+                          rounded-full
+                          bg-yellow-500
+                          group-hover:bg-yellow-400
+                          text-black
+                          text-sm
+                          font-semibold
+                          transition
+                        "
+                      >
+                        View
+                      </div>
+
                     </div>
 
                   </div>
 
-                </div>
+                </Link>
 
-              </Link>
+              );
 
-            )
+            }
           )}
 
         </div>

@@ -39,16 +39,35 @@ export default function ProductCard({
   const whatsappNumber =
     "917006599020";
 
-  const selectedDecant =
-    decants?.[0];
+  // GET MAX DECANT AUTOMATICALLY
+  const maxDecant =
+    decants.length > 0
+      ? [...decants].sort(
+          (a, b) => {
+
+            const aValue =
+              parseInt(
+                a.size.replace(/\D/g, "")
+              ) || 0;
+
+            const bValue =
+              parseInt(
+                b.size.replace(/\D/g, "")
+              ) || 0;
+
+            return bValue - aValue;
+
+          }
+        )[0]
+      : null;
 
   const message =
     `Hello, I want to order ${name} ${
-      selectedDecant
-        ? `(${selectedDecant.size})`
+      maxDecant
+        ? `(${maxDecant.size})`
         : ""
     } for ₹${
-      selectedDecant?.price || 0
+      maxDecant?.price || 0
     }`;
 
   const whatsappLink =
@@ -134,24 +153,73 @@ export default function ProductCard({
           {name}
         </h2>
 
-        {/* SIZE */}
-        <p className="text-zinc-500 text-sm mt-1">
+        {/* HIGHLIGHTED FULL BOTTLE */}
 
-          {selectedDecant?.size ||
-            "Size Unavailable"}
+        {maxDecant && (
 
-        </p>
+          <div
+            className="
+              mt-4
 
-        {/* PRICE + VIEW */}
-        <div className="flex items-center justify-between mt-4">
+              flex
+              items-center
+              justify-between
 
-          <span className="text-xl font-bold text-white">
+              rounded-2xl
 
-            {selectedDecant?.price
-              ? `From ₹${selectedDecant.price}`
-              : "No Price"}
+              border
+              border-amber-400/20
 
-          </span>
+              bg-amber-400/10
+
+              px-4
+              py-3
+            "
+          >
+
+            <div>
+
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.3em]
+                  text-amber-400
+                  mb-1
+                "
+              >
+                Full Bottle
+              </p>
+
+              <p
+                className="
+                  text-sm
+                  text-white
+                  font-medium
+                "
+              >
+                {maxDecant.size}
+              </p>
+
+            </div>
+
+            <div
+              className="
+                text-xl
+                font-bold
+                text-amber-400
+              "
+            >
+              ₹{maxDecant.price}
+            </div>
+
+          </div>
+
+        )}
+
+        {/* VIEW BUTTON */}
+
+        <div className="flex justify-end mt-4">
 
           <button
             onClick={() =>
@@ -263,32 +331,73 @@ export default function ProductCard({
                     (
                       decant,
                       index
-                    ) => (
+                    ) => {
 
-                      <div
-                        key={index}
-                        className="
-                          flex
-                          items-center
-                          justify-between
-                          bg-zinc-800
-                          rounded-2xl
-                          px-4
-                          py-3
-                        "
-                      >
+                      const isMax =
+                        decant.size ===
+                        maxDecant?.size;
 
-                        <span className="text-sm text-zinc-300">
-                          {decant.size}
-                        </span>
+                      return (
 
-                        <span className="text-sm font-semibold text-white">
-                          ₹{decant.price}
-                        </span>
+                        <div
+                          key={index}
+                          className={`
+                            flex
+                            items-center
+                            justify-between
 
-                      </div>
+                            rounded-2xl
+                            px-4
+                            py-3
 
-                    )
+                            ${
+                              isMax
+                                ? `
+                                  bg-amber-400/10
+                                  border
+                                  border-amber-400/20
+                                `
+                                : `
+                                  bg-zinc-800
+                                `
+                            }
+                          `}
+                        >
+
+                          <span
+                            className={`
+                              text-sm
+
+                              ${
+                                isMax
+                                  ? "text-amber-400 font-semibold"
+                                  : "text-zinc-300"
+                              }
+                            `}
+                          >
+                            {decant.size}
+                          </span>
+
+                          <span
+                            className={`
+                              text-sm
+                              font-semibold
+
+                              ${
+                                isMax
+                                  ? "text-amber-400"
+                                  : "text-white"
+                              }
+                            `}
+                          >
+                            ₹{decant.price}
+                          </span>
+
+                        </div>
+
+                      );
+
+                    }
                   )}
 
                 </div>

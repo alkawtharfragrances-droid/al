@@ -257,7 +257,7 @@ export default function Navbar() {
                   mt-1
                 "
               >
-                LUXURY FRAGRANCES
+                    FRAGRANCES
               </span>
 
             </div>
