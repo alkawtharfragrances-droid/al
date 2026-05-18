@@ -59,31 +59,31 @@ export default function ProductsPage() {
     "Bakhoor / Essential Oils",
   ];
 
-  // CATEGORY IMAGES
-  const categoryImages: Record<string, string> = {
+ const categoryImages: Record<string, string> = {
 
   all:
-    "https://images.unsplash.com/photo-1541643600914-78b084683601?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/all.jpeg",
 
- middleeastern:
-  "https://images.pexels.com/photos/2291596/pexels-photo-2291596.jpeg",
+  middleeastern:
+    "/category-images/middle_eastern.jpeg",
+
   designer:
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/designer.jpeg",
 
   niche:
-    "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/niche.jpeg",
 
   french:
-    "https://images.unsplash.com/photo-1431274172761-fca41d930114?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/french.jpeg",
 
   partials:
-    "https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/partials.jpeg",
 
   attar:
-    "https://images.unsplash.com/photo-1615634262417-d53102d6f7d9?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/attar.jpeg",
 
   bakhooressentialoils:
-    "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1600&auto=format&fit=crop",
+    "/category-images/bakhoor.jpeg",
 };
   useEffect(() => {
 
