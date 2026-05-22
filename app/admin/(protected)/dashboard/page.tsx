@@ -827,8 +827,6 @@ export default function DashboardPage() {
 
                   <div className="p-4">
 
-                    {/* CATEGORIES */}
-
                     <div className="flex flex-wrap gap-2 mb-3">
 
                       {product.categories?.map(
@@ -855,8 +853,6 @@ export default function DashboardPage() {
 
                     </div>
 
-                    {/* NAME */}
-
                     <h3
                       className="
                         text-lg
@@ -867,8 +863,6 @@ export default function DashboardPage() {
                     >
                       {product.name}
                     </h3>
-
-                    {/* DECANTS */}
 
                     <div className="space-y-2 mb-5">
 
@@ -906,8 +900,6 @@ export default function DashboardPage() {
                       )}
 
                     </div>
-
-                    {/* BUTTONS */}
 
                     <div className="flex gap-3">
 
@@ -1182,8 +1174,9 @@ export default function DashboardPage() {
                       key={index}
                       className="
                         grid
-                        grid-cols-2
+                        grid-cols-[1fr_1fr_auto]
                         gap-4
+                        items-center
                       "
                     >
 
@@ -1234,6 +1227,42 @@ export default function DashboardPage() {
                           py-5
                         "
                       />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+
+                          const updated =
+                            editDecants.filter(
+                              (_, i) =>
+                                i !== index
+                            );
+
+                          setEditDecants(
+                            updated.length
+                              ? updated
+                              : [
+                                  {
+                                    size: "",
+                                    price: "",
+                                  },
+                                ]
+                          );
+
+                        }}
+                        className="
+                          h-full
+                          px-4
+                          rounded-2xl
+                          bg-red-500
+                          hover:bg-red-600
+                          flex
+                          items-center
+                          justify-center
+                        "
+                      >
+                        <Trash2 size={18} />
+                      </button>
 
                     </div>
 
