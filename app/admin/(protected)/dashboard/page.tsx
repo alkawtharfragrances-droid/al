@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useEffect, useState } from "react";
 
 import {
@@ -408,19 +410,56 @@ export default function DashboardPage() {
 
       <div className="max-w-[1800px] mx-auto">
 
-        {/* HEADER */}
+        {/* NAVIGATION */}
 
-        <div className="mb-14">
+<div className="flex gap-4 mb-10">
 
-          <h1 className="text-5xl font-bold mb-3">
-            Admin Dashboard
-          </h1>
+  <Link
+    href="/admin/dashboard"
+    className="
+      px-6
+      py-3
+      rounded-2xl
+      bg-yellow-500
+      text-black
+      font-semibold
+      transition
+    "
+  >
+    Products
+  </Link>
 
-          <p className="text-zinc-400">
-            Manage your fragrances
-          </p>
+  <Link
+    href="/admin/campaigns"
+    className="
+      px-6
+      py-3
+      rounded-2xl
+      border
+      border-white/10
+      bg-white/5
+      hover:bg-white/10
+      transition
+    "
+  >
+    Campaigns
+  </Link>
 
-        </div>
+</div>
+
+{/* HEADER */}
+
+<div className="mb-14">
+
+  <h1 className="text-5xl font-bold mb-3">
+    Admin Dashboard
+  </h1>
+
+  <p className="text-zinc-400">
+    Manage your fragrances
+  </p>
+
+</div>
 
         {/* ADD PRODUCT */}
 
